@@ -1,11 +1,38 @@
 from queue import LifoQueue, PriorityQueue, Queue
 from random import randint, choice
 from time import sleep
+from dataclasses import dataclass, field
+from enum import IntEnum
 
 from render_state import View
 
 import argparse
 import threading
+
+
+@dataclass(order=True)
+class Product:
+    # dataclass with ordering enabled
+    # but not use label to compare
+    priority: int
+    label: str = field(compare=False)
+
+    def __str__(self):
+        return self.label
+
+
+class Priority(IntEnum):
+    HIGH = 1
+    MEDIUM = 2
+    LOW = 3
+
+
+PRIORITIZED_PRODUCTS = (
+    Product(Priority.HIGH, ":1st_place_medal:"),
+    Product(Priority.MEDIUM, ":2nd_place_medal:"),
+    Product(Priority.LOW, ":3rd_place_medal:"),
+)
+
 
 QUEUE_TYPES = {
     "fifo": Queue,
@@ -130,8 +157,9 @@ class Consumer(Worker):
 
 def main(args):
     buffer = QUEUE_TYPES[args.queue]()
+    products = PRIORITIZED_PRODUCTS if args.queue == "heap" else PRODUCTS
     producers = [
-                    Producer(args.producer_speed, buffer, PRODUCTS)
+                    Producer(args.producer_speed, buffer, products)
                     for _ in range(args.producers)
                  ]
     consumers = [
